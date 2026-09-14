@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hasta el Amanecer</title>
+<style>
+  :root {
+    --night: #0B1220;
+    --night-2: #121B2E;
+    --ember: #E8873A;
+    --ember-dim: #7A4A22;
+    --moon: #DCE3E8;
+    --moon-dim: #7C8BA0;
+    --forest: #23412F;
+    --danger: #B4432D;
+    --ok: #4C8C6B;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: radial-gradient(ellipse at top, var(--night-2) 0%, var(--night) 70%);
+    color: var(--moon);
+    font-family: Georgia, 'Times New Roman', serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .stage {
+    width: 100%;
+    max-width: 560px;
+    position: relative;
+  }
+
+  /* --- Encabezado --- */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 18px;
+    border-bottom: 1px solid rgba(220,227,232,0.15);
+    padding-bottom: 12px;
+  }
+
+  .title {
+    font-size: 22px;
+    letter-spacing: 0.5px;
+    color: var(--moon);
+  }
+
+  .turn {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    color: var(--ember);
+    white-space: nowrap;
+  }
+
+  /* --- Barras de estado --- */
+  .stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .stat {
+    flex: 1;
+  }
+
+  .stat-label {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--moon-dim);
+    margin-bottom: 6px;
+  }
+
+  .bar-track {
+    height: 10px;
+    background: rgba(220,227,232,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    transition: width 0.6s ease;
+    border-radius: 2px;
+  }
+
+  .bar-fill.salud { background: linear-gradient(90deg, var(--danger), var(--ok)); }
+  .bar-fill.recursos { background: linear-gradient(90deg, var(--ember-dim), var(--ember)); }
+
+  /* --- Narración --- */
+  .scene {
+    background: rgba(18,27,46,0.6);
+    border-left: 2px solid var(--ember-dim);
+    padding: 20px 22px;
+    min-height: 92px;
+    font-size: 17px;
+    line-height: 1.55;
+    margin-bottom: 22px;
+  }
+
+  .scene.intro { color: var(--moon-dim); font-style: italic; }
+
+  .scene .tag {
+    display: block;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--ember);
+    margin-bottom: 8px;
+  }
+
+  /* --- Entrada de acción --- */
+  .action-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--night-2);
+    border: 1px solid rgba(220,227,232,0.2);
+    color: var(--moon);
+    padding: 13px 14px;
+    font-family: Georgia, serif;
+    font-size: 15px;
+    border-radius: 3px;
+  }
+
+  input[type="text"]:focus {
+    outline: none;
+    border-color: var(--ember);
+  }
+
+  button.send {
+    background: var(--ember);
+    color: var(--night);
+    border: none;
+    padding: 0 20px;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 13px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  button.send:disabled { opacity: 0.4; cursor: default; }
+  button.send:hover:not(:disabled) { background: #f0995a; }
+
+  .suggestions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .suggestions button {
+    background: transparent;
+    border: 1px solid rgba(220,227,232,0.2);
+    color: var(--moon-dim);
+    padding: 7px 12px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+
+  .suggestions button:hover { border-color: var(--ember); color: var(--ember); }
+
+  /* --- Pantalla final --- */
+  .end-screen {
+    display: none;
+    text-align: center;
+    padding: 50px 20px;
+  }
+
+  .end-screen h1 {
+    font-size: 40px;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+  }
+
+  .end-screen.win h1 { color: var(--ok); }
+  .end-screen.lose h1 { color: var(--danger); }
+
+  .end-screen p {
+    color: var(--moon-dim);
+    font-size: 15px;
+    margin-bottom: 28px;
+  }
+
+  .restart {
+    background: transparent;
+    border: 1px solid var(--ember);
+    color: var(--ember);
+    padding: 12px 26px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+
+  .restart:hover { background: var(--ember); color: var(--night); }
+
+  .loading-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--ember);
+    border-radius: 50%;
+    animation: pulse 1s infinite ease-in-out;
+    margin-right: 4px;
+  }
+  .loading-dot:nth-child(2) { animation-delay: 0.15s; }
+  .loading-dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes pulse { 0%,100% { opacity: 0.2; } 50% { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div id="game">
+    <div class="header">
+      <div class="title">Hasta el Amanecer</div>
+      <div class="turn" id="turnLabel">Turno 0 / 6</div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">SALUD</div>
+        <div class="bar-track"><div class="bar-fill salud" id="saludBar" style="width:100%"></div></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">RECURSOS</div>
+        <div class="bar-track"><div class="bar-fill recursos" id="recursosBar" style="width:50%"></div></div>
+      </div>
+    </div>
+
+    <div class="scene intro" id="scene">
+      <span class="tag">NOCHE EN EL BOSQUE</span>
+      Te has perdido en el bosque cuando cae la noche. Tienes que resistir hasta que salga el sol. ¿Qué haces?
+    </div>
+
+    <div class="action-row">
+      <input type="text" id="actionInput" placeholder="Escribe qué haces..." maxlength="80">
+      <button class="send" id="sendBtn">Actuar</button>
+    </div>
+
+    <div class="suggestions" id="suggestions">
+      <button data-action="Busco agua cerca">Buscar agua</button>
+      <button data-action="Construyo un refugio con ramas">Hacer refugio</button>
+      <button data-action="Exploro el área en busca de comida">Explorar</button>
+    </div>
+  </div>
+
+  <div class="end-screen" id="endScreen">
+    <h1 id="endTitle"></h1>
+    <p id="endText"></p>
+    <button class="restart" id="restartBtn">Jugar de nuevo</button>
+  </div>
+</div>
+
+<script>
+const MAX_TURNS = 6;
+let state = { turno: 0, salud: 100, recursos: 50 };
+let busy = false;
+
+const sceneEl = document.getElementById('scene');
+const turnLabel = document.getElementById('turnLabel');
+const saludBar = document.getElementById('saludBar');
+const recursosBar = document.getElementById('recursosBar');
+const input = document.getElementById('actionInput');
+const sendBtn = document.getElementById('sendBtn');
+const suggestions = document.getElementById('suggestions');
+const gameEl = document.getElementById('game');
+const endScreen = document.getElementById('endScreen');
+const endTitle = document.getElementById('endTitle');
+const endText = document.getElementById('endText');
+
+function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+function updateBars() {
+  saludBar.style.width = state.salud + '%';
+  recursosBar.style.width = state.recursos + '%';
+  turnLabel.textContent = `Turno ${state.turno} / ${MAX_TURNS}`;
+}
+
+function setLoading(on) {
+  busy = on;
+  sendBtn.disabled = on;
+  input.disabled = on;
+  Array.from(suggestions.children).forEach(b => b.disabled = on);
+  if (on) {
+    sceneEl.innerHTML = '<span class="tag">...</span><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>';
+  }
+}
+
+async function takeTurn(accion) {
+  if (busy || !accion.trim()) return;
+  setLoading(true);
+  state.turno += 1;
+
+  try {
+    const response = await fetch("/api/turno", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        turno: state.turno,
+        salud: state.salud,
+        recursos: state.recursos,
+        accion: accion.trim()
+      })
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text();
+      throw new Error(`HTTP ${response.status}: ${errBody.slice(0, 200)}`);
+    }
+
+    let parsed = await response.json();
+
+    state.salud = clamp(state.salud + clamp(parsed.cambio_salud || 0, -20, 15), 0, 100);
+    state.recursos = clamp(state.recursos + clamp(parsed.cambio_recursos || 0, -15, 20), 0, 100);
+
+    sceneEl.innerHTML = `<span class="tag">TURNO ${state.turno}</span>${parsed.narracion}`;
+    updateBars();
+    setLoading(false);
+    input.value = '';
+
+    if (state.salud <= 0) {
+      endGame(false, "Tu salud llegó a cero antes del amanecer.");
+    } else if (state.turno >= MAX_TURNS) {
+      endGame(true, `Llegaste al amanecer con ${state.salud} de salud.`);
+    }
+  } catch (err) {
+    console.error('Error en el turno:', err);
+    sceneEl.innerHTML = `<span class="tag">ERROR</span>${err.message || 'Algo salió mal.'}`;
+    state.turno -= 1;
+    setLoading(false);
+  }
+}
+
+function endGame(won, message) {
+  gameEl.style.display = 'none';
+  endScreen.style.display = 'block';
+  endScreen.className = 'end-screen ' + (won ? 'win' : 'lose');
+  endTitle.textContent = won ? '¡Sobreviviste!' : 'No lo lograste';
+  endText.textContent = message;
+}
+
+function resetGame() {
+  state = { turno: 0, salud: 100, recursos: 50 };
+  gameEl.style.display = 'block';
+  endScreen.style.display = 'none';
+  updateBars();
+  sceneEl.className = 'scene intro';
+  sceneEl.innerHTML = '<span class="tag">NOCHE EN EL BOSQUE</span>Te has perdido en el bosque cuando cae la noche. Tienes que resistir hasta que salga el sol. ¿Qué haces?';
+  input.value = '';
+}
+
+sendBtn.addEventListener('click', () => takeTurn(input.value));
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter') takeTurn(input.value); });
+suggestions.addEventListener('click', (e) => {
+  if (e.target.dataset.action) takeTurn(e.target.dataset.action);
+});
+document.getElementById('restartBtn').addEventListener('click', resetGame);
+</script>
+</body>
+</html>
