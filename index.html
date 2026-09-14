@@ -231,11 +231,11 @@
     <div class="stats">
       <div class="stat">
         <div class="stat-label">SALUD</div>
-        <div class="bar-track"><div class="bar-fill salud" id="saludBar" style="width:100%"></div></div>
+        <div class="bar-track"><div class="bar-fill salud" id="saludBar" style="width:70%"></div></div>
       </div>
       <div class="stat">
         <div class="stat-label">RECURSOS</div>
-        <div class="bar-track"><div class="bar-fill recursos" id="recursosBar" style="width:50%"></div></div>
+        <div class="bar-track"><div class="bar-fill recursos" id="recursosBar" style="width:35%"></div></div>
       </div>
     </div>
 
@@ -265,7 +265,9 @@
 
 <script>
 const MAX_TURNS = 6;
-let state = { turno: 0, salud: 100, recursos: 50 };
+const DESGASTE_SALUD = 4;    // el frío te pasa factura cada turno, hagas lo que hagas
+const DESGASTE_RECURSOS = 6; // el hambre/sed no espera
+let state = { turno: 0, salud: 70, recursos: 35 };
 let busy = false;
 
 const sceneEl = document.getElementById('scene');
@@ -322,8 +324,11 @@ async function takeTurn(accion) {
 
     let parsed = await response.json();
 
-    state.salud = clamp(state.salud + clamp(parsed.cambio_salud || 0, -20, 15), 0, 100);
-    state.recursos = clamp(state.recursos + clamp(parsed.cambio_recursos || 0, -15, 20), 0, 100);
+    const cambioSalud = clamp(parsed.cambio_salud || 0, -28, 10);
+    const cambioRecursos = clamp(parsed.cambio_recursos || 0, -22, 14);
+
+    state.salud = clamp(state.salud - DESGASTE_SALUD + cambioSalud, 0, 100);
+    state.recursos = clamp(state.recursos - DESGASTE_RECURSOS + cambioRecursos, 0, 100);
 
     sceneEl.innerHTML = `<span class="tag">TURNO ${state.turno}</span>${parsed.narracion}`;
     updateBars();
@@ -352,7 +357,7 @@ function endGame(won, message) {
 }
 
 function resetGame() {
-  state = { turno: 0, salud: 100, recursos: 50 };
+  state = { turno: 0, salud: 70, recursos: 35 };
   gameEl.style.display = 'block';
   endScreen.style.display = 'none';
   updateBars();
